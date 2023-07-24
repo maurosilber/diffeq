@@ -5,20 +5,21 @@ import numpy as np
 from numba import float64
 from numba.experimental import jitclass
 
+from . import cache
 from .utils import RHS
 
 
 @jitclass(
     [
         ("rhs", RHS.as_type()),
-        ("t", float64[::1]),
-        ("y", float64[:, ::1]),
         ("p", float64[::1]),
         ("dy", float64[::1]),
     ]
 )
 class Euler:
     dt: float
+    t: cache.Number
+    y: cache.Array
 
     def __init__(self, dt: float):
         self.dt = dt
@@ -30,32 +31,28 @@ class Euler:
         self.p = problem.p
 
         CACHE_SIZE = 2
-        self.t = np.empty(CACHE_SIZE)
-        self.y = np.empty((CACHE_SIZE, len(problem.y)))
-        for i in range(CACHE_SIZE):
-            self.t[i] = problem.t
-            self.y[i] = problem.y
+        self.t = cache.Number(CACHE_SIZE, problem.t)
+        self.y = cache.Array(CACHE_SIZE, problem.y)
         self.dy = np.zeros(len(problem.y), float)
         return self
 
     def step(self) -> float:
-        t = self.t[-1]
-        y = self.y[-1]
+        t = self.t.value
+        y = self.y.value
 
         self.rhs(t, y, self.p, self.dy)
         t = t + self.dt
         y = y + self.dt * self.dy
 
-        self.t[0] = self.t[-1]
-        self.t[1] = t
-        self.y[0] = self.y[-1]
-        self.y[1] = y
-
+        self.t.append(t)
+        self.y.append(y)
         return t
 
     def interpolate(self, t: float):
-        if not self.t[0] <= t <= self.t[1]:
+        if not self.t.values[0] <= t <= self.t.values[1]:
             raise ValueError
 
-        slope = (self.y[1] - self.y[0]) / (self.t[1] - self.t[0])
-        return self.y[0] + slope * (t - self.t[0])
+        slope = (self.y.values[1] - self.y.values[0]) / (
+            self.t.values[1] - self.t.values[0]
+        )
+        return self.y.values[0] + slope * (t - self.t.values[0])

@@ -31,7 +31,7 @@ class AllSteps:
         return self
 
     def save(self, problem: Problem, solver: Solver):
-        t = solver.t[-1]
+        t = solver.t.value
         y = solver.interpolate(t)
         p = problem.p
         self.t.append(t)
