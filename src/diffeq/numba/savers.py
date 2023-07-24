@@ -8,7 +8,7 @@ from numba import float64
 from numba.experimental import jitclass
 from numba.typed import List
 
-from ..protocol import Problem, Solver
+from ..protocol import NDArray, Problem, Solver
 from .solution import Solution
 
 
@@ -46,3 +46,47 @@ class AllSteps:
         for i in range(N):
             y[i] = self.y[i]
         return Solution(t, y)
+
+
+@jitclass
+class AtTimes:
+    i: int
+    t: float64[::1]
+    y: float64[:, ::1]
+
+    def __init__(self, t: NDArray):
+        self.i = 0
+        self.t = t
+
+    def init(self, problem: Problem):
+        if problem.t > self.t[0]:
+            raise ValueError
+
+        self = AtTimes(self.t.copy())
+
+        t = problem.t
+        y = problem.y
+        p = problem.p
+
+        y = problem.transform(t, y, p)
+        self.y = np.empty((len(self.t), len(y)))
+        if t == self.t[0]:
+            self.y[0] = y
+            self.i = 1
+        else:
+            self.i = 0
+        return self
+
+    def save(self, problem: Problem, solver: Solver):
+        if self.i >= len(self.t):
+            # Nothing more to do. Stop solver?
+            return
+
+        if solver.t.value >= self.t[self.i]:
+            t = self.t[self.i]
+            y = solver.interpolate(t)
+            self.y[self.i] = problem.transform(t, y, problem.p)
+            self.i += 1
+
+    def to_solution(self):
+        return Solution(self.t, self.y)
