@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import Protocol, Self
+from typing import Protocol, Self, TypeVar
 
 from numpy.typing import NDArray
+
+T = TypeVar("T")
 
 
 class RHS(Protocol):
@@ -58,9 +60,17 @@ class Problem(Protocol):
     transform: Transform
 
 
+class Cache(Protocol[T]):
+    value: T
+    values: NDArray
+
+    def append(self, value: T):
+        ...
+
+
 class Solver(Protocol):
-    t: NDArray
-    y: NDArray
+    t: Cache[float]
+    y: Cache[NDArray]
     dy: NDArray
 
     def init(self, problem: Problem) -> Self:
