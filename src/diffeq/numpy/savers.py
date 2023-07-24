@@ -23,8 +23,8 @@ class AllSteps(Saver):
         return self
 
     def save(self, problem: Problem, solver: Solver):
-        t = solver.t[-1]
-        y = solver.y[-1]
+        t = solver.t.value
+        y = solver.y.value
         p = problem.p
         self.t.append(t)
         self.y.append(copy_if_shared(problem.transform(t, y, p)))
@@ -63,7 +63,7 @@ class AtTimes(Saver):
             # Nothing more to do. Stop solver?
             return
 
-        if solver.t[-1] >= self.t[self.i]:
+        if solver.t.value >= self.t[self.i]:
             t = self.t[self.i]
             y = solver.interpolate(t)
             self.y[self.i] = problem.transform(t, y, problem.p)
