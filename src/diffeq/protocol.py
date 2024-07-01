@@ -22,8 +22,7 @@ class RHS(Protocol):
         y: NDArray,
         p: NDArray,
         dy: NDArray,
-    ):
-        ...
+    ): ...
 
 
 class Transform(Protocol):
@@ -39,8 +38,7 @@ class Transform(Protocol):
         t: float,
         y: NDArray,
         p: NDArray,
-    ) -> NDArray:
-        ...
+    ) -> NDArray: ...
 
 
 class Problem(Protocol):
@@ -64,8 +62,7 @@ class Cache(Protocol[T]):
     value: T
     values: NDArray
 
-    def append(self, value: T):
-        ...
+    def append(self, value: T): ...
 
 
 class Solver(Protocol):
@@ -88,19 +85,15 @@ class Solver(Protocol):
 
 
 class Saver(Protocol):
-    def init(self, problem: Problem) -> Self:
-        ...
+    def init(self, problem: Problem) -> Self: ...
 
-    def save(self, problem: Problem, solver: Solver) -> None:
-        ...
+    def save(self, problem: Problem, solver: Solver) -> None: ...
 
-    def to_solution(self) -> Solution:
-        ...
+    def to_solution(self) -> Solution: ...
 
 
 class Solution(Protocol):
     t: NDArray
     y: NDArray
 
-    def eval(self, t: float) -> NDArray:
-        ...
+    def eval(self, t: float) -> NDArray: ...
